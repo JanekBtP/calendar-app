@@ -4,7 +4,7 @@ Creating the UI menu item for launching the script
 
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
-  ui.createMenu('Calendar')
+  ui.createMenu('Test It')
       .addItem('Update Calendar', 'updateCalendar')
       .addToUi()
 }
@@ -25,6 +25,7 @@ function updateCalendar() {
   
   /**
   Pulling data from spreadsheet using the utils function
+  Finding the correct table size for the range and removing empty rows
   **/
   
   function getLastDataRow(sheet) {
@@ -37,10 +38,21 @@ function updateCalendar() {
       return range.getNextDataCell(SpreadsheetApp.Direction.UP).getRow();
     }              
   };
+  
+  
   var spreadsheet = SpreadsheetApp.getActiveSheet();
-  var range = spreadsheet.getRange('A4:D'+ getLastDataRow(spreadsheet));
-  var signups = range.getValues();
+  var range = spreadsheet.getRange('A4:D'+ getLastDataRow(spreadsheet));  
+  var allRows = range.getValues();
+  var row = 0;
+  var signups = [];
   var changes = [];
+  
+  for (row=0;row<allRows.length;row++){
+    if (!allRows[row].join("")){}
+        else {
+        signups.push(allRows[row]);
+        }
+  }
   
   /**
   A loop for creating events in Calendar for all people
@@ -51,24 +63,11 @@ function updateCalendar() {
     var employee = vacation[0];
     var type = vacation[1];
     var startTime = vacation[2];
-    var endTime = vacation[3];
+    var endTime = vacation[3]
     var record = employee + " (" + type + ")";
-    endTime.setDate(endTime.getDate() + 1);
+
     /**
     Condition for coloring based on the type
-    
-    Coloring:
-    Pale Blue ("1")
-    Pale Green ("2")
-    Mauve ("3")
-    Pale Red ("4")
-    Yellow ("5")
-    Orange ("6")
-    Cyan ("7")
-    Gray ("8")
-    Blue ("9")
-    Green ("10")
-    Red ("11")
     **/
     
     var eventColor = "9"
@@ -79,24 +78,23 @@ function updateCalendar() {
     /**
     Checking if there are any existing events for the employee within the given date range
     **/
-    var eventCal = CalendarApp.getCalendarById("one99.pl_mdesm69uckc4ig8br3n09m21is@group.calendar.google.com");
+    var eventCal = CalendarApp.getCalendarById(calendarId);
     var alreadyExists = eventCal.getEvents(startTime, endTime, {search: employee})
     /**
-    Creating new event
+    Creating new event if there are none
+    If the start and end times are the same different method must be used to add the event
+    Adding a record of the changes made to alert array
     **/
     if (alreadyExists.length <= 0) {
-      var newEndTime = endTime
-      eventCal.createAllDayEvent(record, startTime, endTime).setColor(eventColor);     
-      newEndTime.setDate(endTime.getDate() - 1);
-      /**
-      Adding a record of the changes made to alert array
-      **/
-      if (startTime.getTime() === newEndTime.getTime()) {
-        changes.push(record+ " " + startTime.toLocaleDateString("en-US"));
-        }
+      
+      if (startTime.getTime() === endTime.getTime()) {
+        eventCal.createAllDayEvent(record, startTime).setColor(eventColor)
+        changes.push(record+ " " + startTime.toLocaleDateString("en-US"))
+      }  
       else {
-          changes.push(record+ " " + startTime.toLocaleDateString("en-US")+ " - "+newEndTime.toLocaleDateString("en-US"));
-        }
+        eventCal.createAllDayEvent(record, startTime, endTime).setColor(eventColor)
+        changes.push(record+ " " + startTime.toLocaleDateString("en-US")+ " - "+endTime.toLocaleDateString("en-US"))
+        }      
       }
     }
     /**
@@ -110,14 +108,3 @@ function updateCalendar() {
     ui.alert("No new changes :(")
     }
    }
-
-
-
-
-
-
-
-
-
-
-
